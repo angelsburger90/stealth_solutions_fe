@@ -10,9 +10,9 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
-import { useAuthenticateUser } from "@hooks/useUserAuthDetails.hooks";
 import { useNavigate } from "react-router-dom";
 import { TAppPage } from "@model/data.types";
+import { useAuthenticateUser } from "@hooks/useUserAuthDetails.hooks";
 
 const MenuFilter = (): JSX.Element => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -20,12 +20,9 @@ const MenuFilter = (): JSX.Element => {
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-
   const { clearCurrentSession } = useAuthenticateUser();
   const navigate = useNavigate();
-
   const menuId = "primary-account-menu";
-
   const handleMenuClose = () => {
     setAnchorEl(null);
   };

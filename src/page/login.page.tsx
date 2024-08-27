@@ -40,7 +40,7 @@ const LoginPage = (): JSX.Element => {
       setOpenLoading(false);
       navigate(TAppPage.USER_DETAILS_PAGE);
     }
-    if(errors || isError) setOpenLoading(false);
+    if (errors || isError) setOpenLoading(false);
   }, [isAuthenticated, errors, isError]);
 
   return (

@@ -15,7 +15,7 @@ export const userAuth = ({
     email: userId,
     password: password,
   });
-  /* eslint-disable  react-hooks/rules-of-hooks */
+  /* eslint-disable react-hooks/rules-of-hooks */
   const query = useQuery({
     queryKey: ["userAuth"],
     queryFn: async () => {
@@ -34,8 +34,7 @@ export const userAuth = ({
 
 export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
   const url = `${API_URL}auth/me`;
-
-  /* eslint-disable  react-hooks/rules-of-hooks */
+  /* eslint-disable react-hooks/rules-of-hooks */
   const query = useQuery({
     queryKey: ["getUserDetailsUsingAccessToken"],
     queryFn: async () => {
@@ -47,6 +46,7 @@ export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
     },
     staleTime: STALE_TIME,
     enabled: false,
+    retry: 0,
   });
   return query;
 };

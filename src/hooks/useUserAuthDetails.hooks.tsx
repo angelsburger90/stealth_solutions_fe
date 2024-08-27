@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useUsersStore } from "./user.store.hooks";
 import { getValue } from "@services/object.utils.services";
+import { useQueryClient } from "@tanstack/react-query";
 
 const COOKIE_MAX_AGE = 86000; //24 hours
 
@@ -14,8 +15,14 @@ export const useUserAuthDetails = () => {
   const accessTokenName = "access_token";
   const accessTokenType = "token_type";
   const [, setCookie, removeCookie] = useCookies();
+  const [authDetailsState, setAuthDetails] = useState<
+    TAuthResponse | undefined
+  >(undefined);
 
-  const [authDetails, setAuthDetails] = useState<TAuthResponse>();
+  const authDetails = useMemo(() => {
+    return authDetailsState;
+  }, [authDetailsState]);
+
   useEffect(() => {
     if (authDetails) {
       setCookie(accessTokenName, authDetails.access_token ?? "", {
@@ -29,13 +36,14 @@ export const useUserAuthDetails = () => {
     }
   }, [authDetails, setCookie]);
 
-  const setAuthCallback = (data: TAuthResponse) => {
+  const setAuthCallback = (data?: TAuthResponse) => {
     setAuthDetails(data);
   };
 
   const clearAuthDetails = () => {
     removeCookie(accessTokenName, { path: "/" });
     removeCookie(accessTokenType, { path: "/" });
+    setAuthDetails(undefined);
   };
   return { authDetails, setAuthCallback, clearAuthDetails };
 };
@@ -44,9 +52,11 @@ export const useAuthenticateUser = () => {
   const [userDetailsPayload, setUserDetailsPayload] = useState<TUserAuth>();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<boolean>(false);
-  const { setAuthCallback, clearAuthDetails } = useUserAuthDetails();
+  const { authDetails, setAuthCallback, clearAuthDetails } =
+    useUserAuthDetails();
   const [userDetailsCache, setUserDetailsCache] = useState<TUser>();
   const setUserDetailsStore = useUsersStore((state) => state.setUserDetails);
+  const queryClient = useQueryClient();
   const {
     data: userAuthDetails,
     refetch: loginUser,
@@ -62,17 +72,26 @@ export const useAuthenticateUser = () => {
     error: errorsUserDetails,
   } = getUserDetailsUsingAccessToken();
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userDetailsPayload) loginUser();
-  }, [userDetailsPayload, loginUser]);
+  }, [userDetailsPayload]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userAuthDetails) {
       setAuthCallback(userAuthDetails as TAuthResponse);
+    }
+  }, [userAuthDetails]);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (authDetails?.access_token) {
       getUserDetails();
     }
-  }, [userAuthDetails, getUserDetails, setAuthCallback]);
+  }, [authDetails]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userDetails) {
       if (userDetails.email === userAuthDetails?.user.email) {
@@ -81,15 +100,18 @@ export const useAuthenticateUser = () => {
         setUserDetailsStore(userDetails);
       }
     }
-  }, [userDetails, setUserDetailsCache, setUserDetailsStore, userAuthDetails]);
+  }, [userDetails, userAuthDetails]);
 
-  const authenticateUser = useCallback((userDetails: TUserAuth) => {
+  const authenticateUser = useCallback(
+    (userDetails: TUserAuth) => {
       setUserDetailsPayload(userDetails);
-  },[userDetails]);
+    },
+    [userDetails],
+  );
 
-  const checkIsAuthenticated = useCallback(()=>{
+  const checkIsAuthenticated = useCallback(() => {
     return isAuthenticated;
-  },[isAuthenticated]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (errorsAuth) {
@@ -101,8 +123,13 @@ export const useAuthenticateUser = () => {
   }, [errorsAuth, errorsUserDetails]);
 
   const clearCurrentSession = () => {
-    clearAuthDetails();
     setUserDetailsStore(undefined);
+    setUserDetailsCache(undefined);
+    setIsAuthenticated(false);
+    setUserDetailsPayload(undefined);
+    setErrorMessage(false);
+    clearAuthDetails();
+    queryClient.removeQueries();
   };
 
   return {
