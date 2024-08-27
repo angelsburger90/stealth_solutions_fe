@@ -6,42 +6,61 @@ import {
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useUsersStore } from "./user.store.hooks";
+import { getValue } from "@services/object.utils.services";
 
 const COOKIE_MAX_AGE = 86000; //24 hours
 
 export const useUserAuthDetails = () => {
-  const [_accessToken, setAccessToken] = useCookies(["access_token"]);
-  const [_tokenType, setTokenType] = useCookies(["token_type"]);
+  const accessTokenName = "access_token";
+  const accessTokenType= "token_type";
+  const [_cookies, setCookie, removeCookie] = useCookies();
+
   const [authDetails, setAuthDetails] = useState<TAuthResponse>();
   useEffect(() => {
     if (authDetails) {
-      setAccessToken("access_token", authDetails.access_token ?? "", {
+      setCookie(accessTokenName, authDetails.access_token ?? "", {
         path: "/",
         maxAge: COOKIE_MAX_AGE,
       });
-      setTokenType("token_type", authDetails.token_type ?? "");
+      setCookie(accessTokenType, authDetails.token_type ?? "", {
+        path: "/",
+        maxAge: COOKIE_MAX_AGE,
+      });
     }
   }, [authDetails]);
 
   const setAuthCallback = (data: TAuthResponse) => {
     setAuthDetails(data);
   };
-  return { authDetails, setAuthCallback };
+
+  const clearAuthDetails = () => {
+    removeCookie(accessTokenName, {path: "/"});
+    removeCookie(accessTokenType, {path: "/"});
+  }
+  return { authDetails, setAuthCallback, clearAuthDetails };
 };
 
 export const useAuthenticateUser = () => {
   const [userDetailsPayload, setUserDetailsPayload] = useState<TUserAuth>();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);  
-  const [errorMessage, setErrorMessage] = useState<boolean>(false);  
-  const { setAuthCallback } = useUserAuthDetails();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<boolean>(false);
+  const { setAuthCallback, clearAuthDetails } = useUserAuthDetails();
   const [userDetailsCache, setUserDetailsCache] = useState<TUser>();
-  const { data: userAuthDetails, refetch: loginUser, isError: isErrorAuth, error:errorsAuth } = userAuth({
+  const setUserDetailsStore = useUsersStore((state) => state.setUserDetails);
+  const {
+    data: userAuthDetails,
+    refetch: loginUser,
+    isError: isErrorAuth,
+    error: errorsAuth,
+  } = userAuth({
     ...userDetailsPayload,
   });
-  const { data: userDetails, refetch: getUserDetails, isError: isErrorUserDetails, error: errorsUserDetails } =
-    getUserDetailsUsingAccessToken();
-
-  const setUserDetailsStore = useUsersStore((state) => state.setUserDetails);
+  const {
+    data: userDetails,
+    refetch: getUserDetails,
+    isError: isErrorUserDetails,
+    error: errorsUserDetails,
+  } = getUserDetailsUsingAccessToken();
 
   useEffect(() => {
     if (userDetailsPayload) loginUser();
@@ -50,6 +69,7 @@ export const useAuthenticateUser = () => {
   useEffect(() => {
     if (userAuthDetails) {
       setAuthCallback(userAuthDetails as TAuthResponse);
+      console.log("really?");
       getUserDetails();
     }
   }, [userAuthDetails]);
@@ -72,13 +92,19 @@ export const useAuthenticateUser = () => {
   };
 
   useEffect(() => {
-    if(errorsAuth){
-        setErrorMessage(errorsAuth?.response?.data?.errors)
+    if (errorsAuth) {
+      setErrorMessage(getValue(errorsAuth, ".response.data.errors"));
     }
-    if(errorsUserDetails){
-        setErrorMessage(errorsUserDetails?.response?.data?.errors)
+    if (errorsUserDetails) {
+      setErrorMessage(getValue(errorsUserDetails, ".response.data.errors"));
     }
-  }, [errorsAuth,errorsUserDetails])
+  }, [errorsAuth, errorsUserDetails]);
+
+
+  const clearCurrentSession = () => {
+    clearAuthDetails();
+    setUserDetailsStore(undefined);
+  }
 
   return {
     userDetails: userDetailsCache,
@@ -86,6 +112,7 @@ export const useAuthenticateUser = () => {
     authenticateUser,
     isAuthenticated,
     errors: errorMessage,
-    isError: isErrorAuth ?? isErrorUserDetails
+    isError: isErrorAuth || isErrorUserDetails,
+    clearCurrentSession
   };
 };

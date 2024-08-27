@@ -46,25 +46,3 @@ export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
   });
   return query;
 };
-
-export const getUserccccccList = ({
-  maxCount = 1000,
-}: {
-  maxCount?: number;
-}): UseQueryResult<TUser[]> => {
-  const url = `${API_URL}user/list/${maxCount}`;
-  const query = useQuery({
-    queryKey: ["getUserList"],
-    queryFn: async () => {
-      return (
-        await apiGet({
-          url,
-        })
-      )?.data as TUser[];
-    },
-    enabled: true,
-    staleTime: STALE_TIME,
-  });
-  return query;
-};
-

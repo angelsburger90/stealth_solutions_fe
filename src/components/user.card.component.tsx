@@ -1,53 +1,85 @@
 import { TUser } from "@model/data.types";
 import {
-  Button,
+  Avatar,
+  Box,
   Card,
-  CardActions,
   CardContent,
-  Typography,
+  CardHeader,
+  CardMedia,
 } from "@mui/material";
-import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
-import MailOutlineOutlinedIcon from "@mui/icons-material/MailOutlineOutlined";
-import LocalPhoneOutlinedIcon from "@mui/icons-material/LocalPhoneOutlined";
-import { useState } from "react";
-import UserDetailsDialog from "./user.details.dialog.component";
+import { red } from "@mui/material/colors";
+import MailOutlinedIcon from "@mui/icons-material/MailOutlined";
+import ThreePOutlinedIcon from "@mui/icons-material/ThreePOutlined";
+import MarkEmailReadOutlinedIcon from "@mui/icons-material/MarkEmailReadOutlined";
+import ContactPageOutlinedIcon from "@mui/icons-material/ContactPageOutlined";
+import { convertToSimpleDateFormat } from "@services/date.services";
 
 const UserCard = ({ userDetails }: { userDetails: TUser }): JSX.Element => {
-  const [openMoreDetails, setOpenMoreDetails] = useState(false);
-  const onHandleMoreDetails = (): void => {
-    setOpenMoreDetails(true);
+  const getAvatarInitial = () => {
+    if (userDetails.name.length > 1) {
+      return userDetails.name.substring(0, 1)?.toUpperCase();
+    }
+    return "N"; //as none
   };
 
   return (
     <>
-      <UserDetailsDialog
-        openDialog={openMoreDetails}
-        onCloseDialog={() => setOpenMoreDetails(false)}
-        userDetails={userDetails}
-      />
-      <Card
-        variant="outlined"
-        key={`${userDetails.name}_${userDetails.id}`}
-        className="mb-2"
-      >
-        <CardContent>
-          <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-            <BadgeOutlinedIcon className="mr-2" fontSize="small" />
-            {userDetails.username}
-          </Typography>
-          <Typography variant="h4" component="div">
-            {userDetails.name}
-          </Typography>
-          <Typography sx={{ mb: 1.5 }} color="text.secondary">
-            <MailOutlineOutlinedIcon className="mr-2" fontSize="small" />
-            {userDetails.email}
-          </Typography>
+      <Card className="w-11/12 sm:w-84 md:w-96">
+        <CardHeader
+          avatar={
+            <Avatar sx={{ bgcolor: red[500] }} aria-label="recipe">
+              {getAvatarInitial()}
+            </Avatar>
+          }
+          title={userDetails.name}
+          subheader={
+            <>
+              <MailOutlinedIcon fontSize="small" />
+              <a href={`mailto:${userDetails.email}`} className="ml-1">
+                {userDetails.email}
+              </a>
+            </>
+          }
+        />
+        <CardMedia
+          component="img"
+          height="194"
+          image="https://i.imgur.com/kFCTrZW.png"
+          alt="Paella dish"
+        />
+        <CardContent className="[&_div]:mb-2 [&_svg]:mr-2 text-sm md:text-base">
+          <Box>
+            <Box>
+              <ThreePOutlinedIcon fontSize="small" />
+              User created at:{" "}
+            </Box>
+            <Box className="font-bold text-orange-500">
+              {convertToSimpleDateFormat(userDetails.created_at.toString())}
+            </Box>
+          </Box>
+          <Box>
+            <Box>
+              <MarkEmailReadOutlinedIcon fontSize="small" />
+              Email verified on:{" "}
+            </Box>
+            <Box className="font-bold text-orange-500">
+              {convertToSimpleDateFormat(
+                  userDetails.email_verified_at.toString()
+                )}
+            </Box>
+          </Box>
+          <Box>
+            <Box>
+              <ContactPageOutlinedIcon fontSize="small" />
+              Account last update on:{" "}
+            </Box>
+            <Box className="font-bold text-orange-500">
+              {convertToSimpleDateFormat(
+                userDetails.email_verified_at.toString()
+              )}
+            </Box>
+          </Box>
         </CardContent>
-        <CardActions>
-          <Button size="small" onClick={onHandleMoreDetails}>
-            More Details
-          </Button>
-        </CardActions>
       </Card>
     </>
   );
