@@ -10,20 +10,18 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
-import { AccountCircle } from "@mui/icons-material";
 import { useAuthenticateUser } from "@hooks/useUserAuthDetails.hooks";
 import { useNavigate } from "react-router-dom";
 import { TAppPage } from "@model/data.types";
 
-
-const MenuFilter = ({}: {}): JSX.Element => {
+const MenuFilter = (): JSX.Element => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const isMenuOpen = Boolean(anchorEl);
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const {clearCurrentSession} = useAuthenticateUser();
+  const { clearCurrentSession } = useAuthenticateUser();
   const navigate = useNavigate();
 
   const menuId = "primary-account-menu";
@@ -32,11 +30,11 @@ const MenuFilter = ({}: {}): JSX.Element => {
     setAnchorEl(null);
   };
 
-  const logout = () =>{
+  const logout = () => {
     handleMenuClose();
     clearCurrentSession();
     navigate(TAppPage.ROOT);
-  }
+  };
 
   return (
     <>
@@ -56,7 +54,10 @@ const MenuFilter = ({}: {}): JSX.Element => {
                 onClick={handleProfileMenuOpen}
                 color="inherit"
               >
-                 <Avatar alt="Profile Picture" src="https://i.imgur.com/kFCTrZW.png" />
+                <Avatar
+                  alt="Profile Picture"
+                  src="https://i.imgur.com/kFCTrZW.png"
+                />
               </IconButton>
             </Box>
           </Toolbar>

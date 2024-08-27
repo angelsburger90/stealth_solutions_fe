@@ -16,12 +16,12 @@ const LoadingDialog = (props: LoadingDialogProps): JSX.Element => {
     <>
       <Dialog onClose={handleClose} open={open}>
         <div className="flex flex-col items-center m-8">
-            <div>
-                <CircularProgress />
-            </div>
-            <div>
-                <span>Signing in...</span>
-            </div>
+          <div>
+            <CircularProgress />
+          </div>
+          <div>
+            <span>Signing in...</span>
+          </div>
         </div>
       </Dialog>
     </>

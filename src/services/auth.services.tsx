@@ -3,14 +3,17 @@ import { TAuthResponse, TUser, TUserAuth } from "@model/data.types";
 import { apiGet, apiPost } from "@datacontext/connector.abstract";
 import { getDataApiURL } from "@services/config.services";
 
-const STALE_TIME = 10 * 60 * 1000; //10 minutes
+//const STALE_TIME = 10 * 60 * 1000; //10 minutes
 const API_URL = getDataApiURL();
 
-export const userAuth = ({ userId, password }: Partial<TUserAuth>): UseQueryResult<TAuthResponse> => {
+export const userAuth = ({
+  userId,
+  password,
+}: Partial<TUserAuth>): UseQueryResult<TAuthResponse> => {
   const url = `${API_URL}auth/login`;
   const payload = JSON.stringify({
     email: userId,
-    password: password
+    password: password,
   });
   /* eslint-disable  react-hooks/rules-of-hooks */
   const query = useQuery({
@@ -19,7 +22,7 @@ export const userAuth = ({ userId, password }: Partial<TUserAuth>): UseQueryResu
       return (
         await apiPost({
           url,
-          payload
+          payload,
         })
       )?.data?.data as TAuthResponse;
     },
@@ -28,17 +31,16 @@ export const userAuth = ({ userId, password }: Partial<TUserAuth>): UseQueryResu
   return query;
 };
 
-
 export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
   const url = `${API_URL}auth/me`;
-  
+
   /* eslint-disable  react-hooks/rules-of-hooks */
   const query = useQuery({
     queryKey: ["getUserDetailsUsingAccessToken"],
     queryFn: async () => {
       return (
         await apiGet({
-          url
+          url,
         })
       )?.data?.data as TUser;
     },

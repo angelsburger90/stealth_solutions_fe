@@ -64,8 +64,8 @@ const UserCard = ({ userDetails }: { userDetails: TUser }): JSX.Element => {
             </Box>
             <Box className="font-bold text-orange-500">
               {convertToSimpleDateFormat(
-                  userDetails.email_verified_at.toString()
-                )}
+                userDetails.email_verified_at.toString(),
+              )}
             </Box>
           </Box>
           <Box>
@@ -75,7 +75,7 @@ const UserCard = ({ userDetails }: { userDetails: TUser }): JSX.Element => {
             </Box>
             <Box className="font-bold text-orange-500">
               {convertToSimpleDateFormat(
-                userDetails.email_verified_at.toString()
+                userDetails.email_verified_at.toString(),
               )}
             </Box>
           </Box>

@@ -1,16 +1,16 @@
 export enum TAppPage {
   ALL = "*",
   ROOT = "/",
-  USER_DETAILS_PAGE = "/userDetailsPage"
+  USER_DETAILS_PAGE = "/userDetailsPage",
 }
 
-export interface TUserAuth{
+export interface TUserAuth {
   userId: string;
   password: string;
   rememberMe?: boolean;
 }
 
-export interface TAuthResponse{
+export interface TAuthResponse {
   access_token: string;
   token_type: string;
   user: TUser;

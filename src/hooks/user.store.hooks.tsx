@@ -6,9 +6,7 @@ type UsersStoreState = {
 };
 
 type UsersStoreAction = {
-  setUserDetails: (
-    value?: UsersStoreState["userDetails"],
-  ) => void;
+  setUserDetails: (value?: UsersStoreState["userDetails"]) => void;
 };
 
 export const useUsersStore = create<UsersStoreState & UsersStoreAction>(

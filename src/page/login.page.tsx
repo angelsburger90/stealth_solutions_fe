@@ -14,7 +14,8 @@ import LoadingDialog from "@components/loading.dialog.component";
 
 const LoginPage = (): JSX.Element => {
   const [loginPayload, setLoginPayload] = useState<TUserAuth>();
-  const { isAuthenticated, authenticateUser, errors, isError } = useAuthenticateUser();
+  const { isAuthenticated, authenticateUser, errors, isError } =
+    useAuthenticateUser();
   const navigate = useNavigate();
   const [openLoading, setOpenLoading] = useState(false);
 
@@ -32,7 +33,7 @@ const LoginPage = (): JSX.Element => {
       setOpenLoading(true);
       authenticateUser(loginPayload);
     }
-  }, [loginPayload]);
+  }, [loginPayload, authenticateUser]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,8 +43,7 @@ const LoginPage = (): JSX.Element => {
     if (errors || isError) {
       setOpenLoading(false);
     }
-
-  }, [isAuthenticated, errors, isError]);
+  }, [isAuthenticated, errors, isError, navigate]);
 
   return (
     <>
@@ -51,9 +51,7 @@ const LoginPage = (): JSX.Element => {
 
       <Container component="main" maxWidth="xs">
         <CssBaseline />
-        <Box
-          className="flex mt-4 items-center flex-col h-screen justify-center"
-        >
+        <Box className="flex mt-4 items-center flex-col h-screen justify-center">
           <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
             <LockOutlinedIcon />
           </Avatar>
@@ -90,9 +88,7 @@ const LoginPage = (): JSX.Element => {
             />
 
             {isError && (
-                <Box className="text-red-500">
-                    Invalid credentials.
-                </Box>
+              <Box className="text-red-500">Invalid credentials.</Box>
             )}
 
             <Button

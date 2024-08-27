@@ -12,8 +12,8 @@ const COOKIE_MAX_AGE = 86000; //24 hours
 
 export const useUserAuthDetails = () => {
   const accessTokenName = "access_token";
-  const accessTokenType= "token_type";
-  const [_cookies, setCookie, removeCookie] = useCookies();
+  const accessTokenType = "token_type";
+  const [, setCookie, removeCookie] = useCookies();
 
   const [authDetails, setAuthDetails] = useState<TAuthResponse>();
   useEffect(() => {
@@ -27,16 +27,16 @@ export const useUserAuthDetails = () => {
         maxAge: COOKIE_MAX_AGE,
       });
     }
-  }, [authDetails]);
+  }, [authDetails, setCookie]);
 
   const setAuthCallback = (data: TAuthResponse) => {
     setAuthDetails(data);
   };
 
   const clearAuthDetails = () => {
-    removeCookie(accessTokenName, {path: "/"});
-    removeCookie(accessTokenType, {path: "/"});
-  }
+    removeCookie(accessTokenName, { path: "/" });
+    removeCookie(accessTokenType, { path: "/" });
+  };
   return { authDetails, setAuthCallback, clearAuthDetails };
 };
 
@@ -64,15 +64,14 @@ export const useAuthenticateUser = () => {
 
   useEffect(() => {
     if (userDetailsPayload) loginUser();
-  }, [userDetailsPayload]);
+  }, [userDetailsPayload, loginUser]);
 
   useEffect(() => {
     if (userAuthDetails) {
       setAuthCallback(userAuthDetails as TAuthResponse);
-      console.log("really?");
       getUserDetails();
     }
-  }, [userAuthDetails]);
+  }, [userAuthDetails, getUserDetails, setAuthCallback]);
 
   useEffect(() => {
     if (userDetails) {
@@ -82,7 +81,7 @@ export const useAuthenticateUser = () => {
         setUserDetailsStore(userDetails);
       }
     }
-  }, [userDetails]);
+  }, [userDetails, setUserDetailsCache, setUserDetailsStore, userAuthDetails]);
 
   const authenticateUser = (userDetails: TUserAuth) => {
     setUserDetailsPayload(userDetails);
@@ -100,11 +99,10 @@ export const useAuthenticateUser = () => {
     }
   }, [errorsAuth, errorsUserDetails]);
 
-
   const clearCurrentSession = () => {
     clearAuthDetails();
     setUserDetailsStore(undefined);
-  }
+  };
 
   return {
     userDetails: userDetailsCache,
@@ -113,6 +111,6 @@ export const useAuthenticateUser = () => {
     isAuthenticated,
     errors: errorMessage,
     isError: isErrorAuth || isErrorUserDetails,
-    clearCurrentSession
+    clearCurrentSession,
   };
 };
