@@ -3,7 +3,7 @@ import { TAuthResponse, TUser, TUserAuth } from "@model/data.types";
 import { apiGet, apiPost } from "@datacontext/connector.abstract";
 import { getDataApiURL } from "@services/config.services";
 
-//const STALE_TIME = 10 * 60 * 1000; //10 minutes
+const STALE_TIME = 10 * 60 * 1000; //10 minutes
 const API_URL = getDataApiURL();
 
 export const userAuth = ({
@@ -44,6 +44,7 @@ export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
         })
       )?.data?.data as TUser;
     },
+    staleTime: STALE_TIME,
     enabled: false,
   });
   return query;
