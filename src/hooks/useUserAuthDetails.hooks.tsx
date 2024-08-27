@@ -3,7 +3,7 @@ import {
   getUserDetailsUsingAccessToken,
   userAuth,
 } from "@services/auth.services";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useUsersStore } from "./user.store.hooks";
 import { getValue } from "@services/object.utils.services";
@@ -83,16 +83,17 @@ export const useAuthenticateUser = () => {
     }
   }, [userDetails, setUserDetailsCache, setUserDetailsStore, userAuthDetails]);
 
-  const authenticateUser = (userDetails: TUserAuth) => {
-    setUserDetailsPayload(userDetails);
-  };
-  const checkIsAuthenticated = () => {
+  const authenticateUser = useCallback((userDetails: TUserAuth) => {
+      setUserDetailsPayload(userDetails);
+  },[userDetails]);
+
+  const checkIsAuthenticated = useCallback(()=>{
     return isAuthenticated;
-  };
+  },[isAuthenticated]);
 
   useEffect(() => {
     if (errorsAuth) {
-      setErrorMessage(getValue(errorsAuth, ".response.data.errors"));
+      setErrorMessage(getValue(errorsAuth, "response.data.message"));
     }
     if (errorsUserDetails) {
       setErrorMessage(getValue(errorsUserDetails, ".response.data.errors"));

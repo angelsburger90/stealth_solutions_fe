@@ -27,6 +27,7 @@ export const userAuth = ({
       )?.data?.data as TAuthResponse;
     },
     enabled: false,
+    retry: 0,
   });
   return query;
 };

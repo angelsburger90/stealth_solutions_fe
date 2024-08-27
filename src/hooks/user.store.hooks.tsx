@@ -17,7 +17,7 @@ export const useUsersStore = create<UsersStoreState & UsersStoreAction>()(
       setUserDetails: (value?: TUser) => set({ userDetails: value }),
     }),
     {
-      name: "userStorePersist",
+      name: "userstore",
     },
   ),
 );
