@@ -2,6 +2,7 @@ import { TAuthResponse, TUser, TUserAuth } from "@model/data.types";
 import {
   getUserDetailsUsingAccessToken,
   userAuth,
+  userAuthLogout,
 } from "@services/auth.services";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
@@ -18,6 +19,15 @@ export const useUserAuthDetails = () => {
   const [authDetailsState, setAuthDetails] = useState<
     TAuthResponse | undefined
   >(undefined);
+  const queryClient = useQueryClient();
+  const [isLogoutSuccessful, setIsLogoutSuccessful] = useState(false);
+
+  const {
+    data: userLogoutDetails,
+    refetch: logoutUser,
+    isError: isErrorAuthLogout,
+    isSuccess: isLogoutSuccess,
+  } = userAuthLogout();
 
   const authDetails = useMemo(() => {
     return authDetailsState;
@@ -33,6 +43,7 @@ export const useUserAuthDetails = () => {
         path: "/",
         maxAge: COOKIE_MAX_AGE,
       });
+      setIsLogoutSuccessful(false);
     }
   }, [authDetails, setCookie]);
 
@@ -40,23 +51,37 @@ export const useUserAuthDetails = () => {
     setAuthDetails(data);
   };
 
+  useEffect(() => {
+    if (isLogoutSuccess) {
+      removeCookie(accessTokenName, { path: "/" });
+      removeCookie(accessTokenType, { path: "/" });
+      setAuthDetails(undefined);
+      setIsLogoutSuccessful(true);
+      queryClient.removeQueries();
+    }
+  }, [
+    userLogoutDetails,
+    isErrorAuthLogout,
+    isLogoutSuccess,
+    queryClient,
+    removeCookie,
+  ]);
+
   const clearAuthDetails = () => {
-    removeCookie(accessTokenName, { path: "/" });
-    removeCookie(accessTokenType, { path: "/" });
-    setAuthDetails(undefined);
+    logoutUser();
   };
-  return { authDetails, setAuthCallback, clearAuthDetails };
+  return { authDetails, setAuthCallback, clearAuthDetails, isLogoutSuccessful };
 };
 
 export const useAuthenticateUser = () => {
   const [userDetailsPayload, setUserDetailsPayload] = useState<TUserAuth>();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<boolean>(false);
-  const { authDetails, setAuthCallback, clearAuthDetails } =
+  const { authDetails, setAuthCallback, clearAuthDetails, isLogoutSuccessful } =
     useUserAuthDetails();
   const [userDetailsCache, setUserDetailsCache] = useState<TUser>();
   const setUserDetailsStore = useUsersStore((state) => state.setUserDetails);
-  const queryClient = useQueryClient();
+
   const {
     data: userAuthDetails,
     refetch: loginUser,
@@ -128,9 +153,17 @@ export const useAuthenticateUser = () => {
     setIsAuthenticated(false);
     setUserDetailsPayload(undefined);
     setErrorMessage(false);
-    clearAuthDetails();
-    queryClient.removeQueries();
   };
+
+  const proceedLogout = () => {
+    clearAuthDetails();
+  };
+
+  useEffect(() => {
+    if (isLogoutSuccessful) {
+      clearCurrentSession();
+    }
+  }, [isLogoutSuccessful]);
 
   return {
     userDetails: userDetailsCache,
@@ -140,5 +173,7 @@ export const useAuthenticateUser = () => {
     errors: errorMessage,
     isError: isErrorAuth || isErrorUserDetails,
     clearCurrentSession,
+    isLogoutSuccessful,
+    proceedLogout,
   };
 };

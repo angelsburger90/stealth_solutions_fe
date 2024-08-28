@@ -1,5 +1,10 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { TAuthResponse, TUser, TUserAuth } from "@model/data.types";
+import {
+  TAuthResponse,
+  TQueryMessageResponse,
+  TUser,
+  TUserAuth,
+} from "@model/data.types";
 import { apiGet, apiPost } from "@datacontext/connector.abstract";
 import { getDataApiURL } from "@services/config.services";
 
@@ -43,6 +48,26 @@ export const getUserDetailsUsingAccessToken = (): UseQueryResult<TUser> => {
           url,
         })
       )?.data?.data as TUser;
+    },
+    staleTime: STALE_TIME,
+    enabled: false,
+    retry: 0,
+  });
+  return query;
+};
+
+export const userAuthLogout = (): UseQueryResult<TQueryMessageResponse> => {
+  const url = `${API_URL}auth/logout`;
+  /* eslint-disable react-hooks/rules-of-hooks */
+  const query = useQuery({
+    queryKey: ["userAuthLogout"],
+    queryFn: async () => {
+      const data = await apiPost({ url });
+      const response: TQueryMessageResponse = {
+        responseCode: (data?.status ?? "").toString(),
+        message: data?.data?.message ?? "",
+      };
+      return response;
     },
     staleTime: STALE_TIME,
     enabled: false,

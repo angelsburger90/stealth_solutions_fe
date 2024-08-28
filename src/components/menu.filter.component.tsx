@@ -8,7 +8,7 @@ import {
   Menu,
   Avatar,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { TAppPage } from "@model/data.types";
@@ -20,17 +20,23 @@ const MenuFilter = (): JSX.Element => {
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const { clearCurrentSession } = useAuthenticateUser();
+  const { isLogoutSuccessful, proceedLogout } = useAuthenticateUser();
   const navigate = useNavigate();
   const menuId = "primary-account-menu";
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (isLogoutSuccessful) {
+      navigate(TAppPage.ROOT);
+    }
+  }, [isLogoutSuccessful]);
+
   const logout = () => {
     handleMenuClose();
-    clearCurrentSession();
-    navigate(TAppPage.ROOT);
+    proceedLogout();
   };
 
   return (

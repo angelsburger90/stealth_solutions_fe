@@ -67,11 +67,11 @@ export const apiGet = async ({
 
 export const apiPost = async ({
   url,
-  payload,
+  payload = "",
   withCredentials = false,
 }: {
   url: string;
-  payload: string;
+  payload?: string;
   withCredentials?: boolean;
 }): Promise<TApiResult | undefined> => {
   if (!AXIOS_CLIENT) return;

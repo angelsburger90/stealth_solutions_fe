@@ -4,6 +4,11 @@ export enum TAppPage {
   USER_DETAILS_PAGE = "/userDetailsPage",
 }
 
+export interface TQueryMessageResponse {
+  responseCode?: string;
+  message?: string;
+}
+
 export interface TUserAuth {
   userId: string;
   password: string;
