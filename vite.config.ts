@@ -26,8 +26,8 @@ export default defineConfig({
       output: {
         entryFileNames: `[name]` + genRandomHash + `.js`,
         chunkFileNames: `[name]` + genRandomHash + `.js`,
-        assetFileNames: `[name]` + genRandomHash + `.[ext]`
-      }
-    }
-  }
+        assetFileNames: `[name]` + genRandomHash + `.[ext]`,
+      },
+    },
+  },
 });
