@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
+export const genRandomHash = Math.floor(Math.random() * 90000) + 10000;
+
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
@@ -19,4 +21,13 @@ export default defineConfig({
     },
   },
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: `[name]` + genRandomHash + `.js`,
+        chunkFileNames: `[name]` + genRandomHash + `.js`,
+        assetFileNames: `[name]` + genRandomHash + `.[ext]`,
+      },
+    },
+  },
 });

@@ -45,7 +45,7 @@ const UserCard = ({ userDetails }: { userDetails: TUser }): JSX.Element => {
           component="img"
           height="194"
           image="https://i.imgur.com/kFCTrZW.png"
-          alt="Paella dish"
+          alt={userDetails.name}
         />
         <CardContent className="[&_div]:mb-2 [&_svg]:mr-2 text-sm md:text-base">
           <Box>
