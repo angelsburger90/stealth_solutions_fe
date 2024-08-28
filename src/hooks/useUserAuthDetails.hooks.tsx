@@ -2,58 +2,140 @@ import { TAuthResponse, TUser, TUserAuth } from "@model/data.types";
 import {
   getUserDetailsUsingAccessToken,
   userAuth,
+  userAuthLogout,
 } from "@services/auth.services";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useUsersStore } from "./user.store.hooks";
+import { getValue } from "@services/object.utils.services";
+import { useQueryClient } from "@tanstack/react-query";
 
 const COOKIE_MAX_AGE = 86000; //24 hours
 
 export const useUserAuthDetails = () => {
-  const [_accessToken, setAccessToken] = useCookies(["access_token"]);
-  const [_tokenType, setTokenType] = useCookies(["token_type"]);
-  const [authDetails, setAuthDetails] = useState<TAuthResponse>();
+  const accessTokenName = "access_token";
+  const accessTokenType = "token_type";
+  const [, setCookie, removeCookie] = useCookies();
+  const [authDetailsState, setAuthDetails] = useState<
+    TAuthResponse | undefined
+  >(undefined);
+  const queryClient = useQueryClient();
+  const [isLogoutSuccessful, setIsLogoutSuccessful] = useState(false);
+
+  const {
+    data: userLogoutDetails,
+    refetch: logoutUser,
+    isError: isErrorAuthLogout,
+    isSuccess: isLogoutSuccess,
+    error: logoutError,
+  } = userAuthLogout();
+
+  const authDetails = useMemo(() => {
+    return authDetailsState;
+  }, [authDetailsState]);
+
   useEffect(() => {
     if (authDetails) {
-      setAccessToken("access_token", authDetails.access_token ?? "", {
+      setCookie(accessTokenName, authDetails.access_token ?? "", {
         path: "/",
         maxAge: COOKIE_MAX_AGE,
       });
-      setTokenType("token_type", authDetails.token_type ?? "");
+      setCookie(accessTokenType, authDetails.token_type ?? "", {
+        path: "/",
+        maxAge: COOKIE_MAX_AGE,
+      });
+      setIsLogoutSuccessful(false);
     }
-  }, [authDetails]);
+  }, [authDetails, setCookie]);
 
-  const setAuthCallback = (data: TAuthResponse) => {
+  const setAuthCallback = (data?: TAuthResponse) => {
     setAuthDetails(data);
   };
-  return { authDetails, setAuthCallback };
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const clearTokens = useCallback(() => {
+    removeCookie(accessTokenName, { path: "/" });
+    removeCookie(accessTokenType, { path: "/" });
+    setAuthDetails(undefined);
+    setIsLogoutSuccessful(true);
+    queryClient.removeQueries();
+  }, []);
+
+  useEffect(() => {
+    if (isLogoutSuccess) clearTokens();
+    if (isErrorAuthLogout && logoutError) {
+      if (
+        (getValue(logoutError, "response.status") ?? "")?.toString() === "401"
+      ) {
+        clearTokens?.();
+      }
+    }
+  }, [
+    userLogoutDetails,
+    isErrorAuthLogout,
+    isLogoutSuccess,
+    queryClient,
+    removeCookie,
+    logoutError,
+    clearTokens,
+  ]);
+
+  const clearAuthDetails = () => {
+    logoutUser();
+  };
+  return {
+    authDetails,
+    setAuthCallback,
+    clearAuthDetails,
+    isLogoutSuccessful,
+    clearTokens,
+  };
 };
 
 export const useAuthenticateUser = () => {
   const [userDetailsPayload, setUserDetailsPayload] = useState<TUserAuth>();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);  
-  const [errorMessage, setErrorMessage] = useState<boolean>(false);  
-  const { setAuthCallback } = useUserAuthDetails();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<boolean>(false);
+  const { authDetails, setAuthCallback, clearAuthDetails, isLogoutSuccessful } =
+    useUserAuthDetails();
   const [userDetailsCache, setUserDetailsCache] = useState<TUser>();
-  const { data: userAuthDetails, refetch: loginUser, isError: isErrorAuth, error:errorsAuth } = userAuth({
-    ...userDetailsPayload,
-  });
-  const { data: userDetails, refetch: getUserDetails, isError: isErrorUserDetails, error: errorsUserDetails } =
-    getUserDetailsUsingAccessToken();
-
   const setUserDetailsStore = useUsersStore((state) => state.setUserDetails);
 
+  const {
+    data: userAuthDetails,
+    refetch: loginUser,
+    isError: isErrorAuth,
+    error: errorsAuth,
+  } = userAuth({
+    ...userDetailsPayload,
+  });
+  const {
+    data: userDetails,
+    refetch: getUserDetails,
+    isError: isErrorUserDetails,
+    error: errorsUserDetails,
+  } = getUserDetailsUsingAccessToken();
+
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userDetailsPayload) loginUser();
   }, [userDetailsPayload]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userAuthDetails) {
       setAuthCallback(userAuthDetails as TAuthResponse);
-      getUserDetails();
     }
   }, [userAuthDetails]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (authDetails?.access_token) {
+      getUserDetails();
+    }
+  }, [authDetails]);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (userDetails) {
       if (userDetails.email === userAuthDetails?.user.email) {
@@ -62,23 +144,45 @@ export const useAuthenticateUser = () => {
         setUserDetailsStore(userDetails);
       }
     }
-  }, [userDetails]);
+  }, [userDetails, userAuthDetails]);
 
-  const authenticateUser = (userDetails: TUserAuth) => {
-    setUserDetailsPayload(userDetails);
-  };
-  const checkIsAuthenticated = () => {
+  const authenticateUser = useCallback(
+    (userDetails: TUserAuth) => {
+      setUserDetailsPayload(userDetails);
+    },
+    [userDetails],
+  );
+
+  const checkIsAuthenticated = useCallback(() => {
     return isAuthenticated;
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (errorsAuth) {
+      setErrorMessage(getValue(errorsAuth, "response.data.message"));
+    }
+    if (errorsUserDetails) {
+      setErrorMessage(getValue(errorsUserDetails, ".response.data.errors"));
+    }
+  }, [errorsAuth, errorsUserDetails]);
+
+  const clearCurrentSession = () => {
+    setUserDetailsStore(undefined);
+    setUserDetailsCache(undefined);
+    setIsAuthenticated(false);
+    setUserDetailsPayload(undefined);
+    setErrorMessage(false);
+  };
+
+  const proceedLogout = () => {
+    clearAuthDetails();
   };
 
   useEffect(() => {
-    if(errorsAuth){
-        setErrorMessage(errorsAuth?.response?.data?.errors)
+    if (isLogoutSuccessful) {
+      clearCurrentSession();
     }
-    if(errorsUserDetails){
-        setErrorMessage(errorsUserDetails?.response?.data?.errors)
-    }
-  }, [errorsAuth,errorsUserDetails])
+  }, [isLogoutSuccessful]);
 
   return {
     userDetails: userDetailsCache,
@@ -86,6 +190,9 @@ export const useAuthenticateUser = () => {
     authenticateUser,
     isAuthenticated,
     errors: errorMessage,
-    isError: isErrorAuth ?? isErrorUserDetails
+    isError: isErrorAuth || isErrorUserDetails,
+    clearCurrentSession,
+    isLogoutSuccessful,
+    proceedLogout,
   };
 };

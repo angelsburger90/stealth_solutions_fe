@@ -1,4 +1,4 @@
-import { CircularProgress, Dialog } from "@mui/material";
+import { Box, CircularProgress, Dialog } from "@mui/material";
 
 export interface LoadingDialogProps {
   open: boolean;
@@ -15,14 +15,14 @@ const LoadingDialog = (props: LoadingDialogProps): JSX.Element => {
   return (
     <>
       <Dialog onClose={handleClose} open={open}>
-        <div className="flex flex-col items-center m-8">
-            <div>
-                <CircularProgress />
-            </div>
-            <div>
-                <span>Signing in...</span>
-            </div>
-        </div>
+        <Box className="flex flex-col items-center m-8">
+          <Box>
+            <CircularProgress />
+          </Box>
+          <Box>
+            <span>Signing in...</span>
+          </Box>
+        </Box>
       </Dialog>
     </>
   );
