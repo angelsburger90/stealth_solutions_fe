@@ -12,11 +12,17 @@ import { useAuthenticateUser } from "@hooks/useUserAuthDetails.hooks";
 import { useNavigate } from "react-router-dom";
 import LoadingDialog from "@components/loading.dialog.component";
 import { isEmailFormat } from "@services/string.services";
+import { FieldError, SubmitHandler, useForm } from "react-hook-form";
 
 const LoginPage = (): JSX.Element => {
   const [loginPayload, setLoginPayload] = useState<TUserAuth>();
-  const [isUserIdError, setIsUserIdError] = useState(false);
-  const [isPasswordError, setIsPasswordError] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors: formErrors },
+  } = useForm<TUserAuth>();
 
   const { isAuthenticated, authenticateUser, errors, isError } =
     useAuthenticateUser();
@@ -30,27 +36,19 @@ const LoginPage = (): JSX.Element => {
       formData.userId.trim().length <= 0 ||
       !isEmailFormat(formData.userId)
     ) {
-      setIsUserIdError(true);
       isValidated = true;
+      setError("userId", { message: "Invalid email input." });
     }
     if (!formData.password || formData.password.trim().length <= 0) {
-      setIsPasswordError(true);
       isValidated = true;
+      setError("password", { message: "Invalid password input." });
     }
     return isValidated;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    setIsUserIdError(false);
-    setIsPasswordError(false);
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const formData = {
-      userId: data.get("email")?.toString() ?? "",
-      password: data.get("password")?.toString() ?? "",
-    } as TUserAuth;
-    if (isFormValidated(formData)) return;
-    setLoginPayload(formData);
+  const onSubmitForm: SubmitHandler<TUserAuth> = (data: TUserAuth) => {
+    if (isFormValidated(data)) return;
+    setLoginPayload(data);
   };
 
   useEffect(() => {
@@ -69,6 +67,16 @@ const LoginPage = (): JSX.Element => {
     if (errors || isError) setOpenLoading(false);
   }, [isAuthenticated, errors, isError]);
 
+  const DisplayFieldError = ({
+    field,
+  }: {
+    field?: FieldError;
+  }): JSX.Element => {
+    return (
+      <>{field && <span className="text-red-500">{field.message}</span>}</>
+    );
+  };
+
   return (
     <>
       <LoadingDialog open={openLoading} />
@@ -84,7 +92,7 @@ const LoginPage = (): JSX.Element => {
           </Typography>
           <Box
             component="form"
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmitForm)}
             noValidate
             className="!mt-1"
           >
@@ -94,30 +102,25 @@ const LoginPage = (): JSX.Element => {
               fullWidth
               id="email"
               label="Email Address"
-              name="email"
               autoComplete="email"
               autoFocus
-              error={isError || isUserIdError}
+              error={isError}
+              {...register("userId", { required: true })}
             />
-            {isUserIdError && (
-              <span className="text-red-500">Invalid email input</span>
-            )}
+            <DisplayFieldError field={formErrors?.userId} />
 
             <TextField
               margin="normal"
               required
               fullWidth
-              name="password"
               label="Password"
               type="password"
               id="password"
               autoComplete="current-password"
-              error={isError || isPasswordError}
+              error={isError}
+              {...register("password", { required: true })}
             />
-
-            {isPasswordError && (
-              <span className="text-red-500">Invalid password input</span>
-            )}
+            <DisplayFieldError field={formErrors?.password} />
 
             {isError && (
               <Box className="text-red-500">Invalid credentials.</Box>
