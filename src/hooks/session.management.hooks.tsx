@@ -2,6 +2,7 @@ import { TAppPage } from "@model/data.types";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getCookie } from "@services/cookie.services";
+import { useUserAuthDetails } from "./useUserAuthDetails.hooks";
 
 const ROOT_PAGES: string[] = [TAppPage.ALL, TAppPage.ROOT];
 
@@ -9,6 +10,7 @@ export const useNavigationInterceptor = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSessionValid, setIsSessionValid] = useState(false);
+  const { clearTokens } = useUserAuthDetails();
   const isRootPath = () => {
     return ROOT_PAGES.includes(location.pathname);
   };
@@ -21,6 +23,8 @@ export const useNavigationInterceptor = () => {
         if (!isRootPath()) return;
         navigate(TAppPage.USER_DETAILS_PAGE);
       }
+    } else {
+      clearTokens();
     }
     setIsSessionValid(false);
     if (isRootPath()) return;

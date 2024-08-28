@@ -27,6 +27,7 @@ export const useUserAuthDetails = () => {
     refetch: logoutUser,
     isError: isErrorAuthLogout,
     isSuccess: isLogoutSuccess,
+    error: logoutError,
   } = userAuthLogout();
 
   const authDetails = useMemo(() => {
@@ -51,13 +52,23 @@ export const useUserAuthDetails = () => {
     setAuthDetails(data);
   };
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const clearTokens = useCallback(() => {
+    removeCookie(accessTokenName, { path: "/" });
+    removeCookie(accessTokenType, { path: "/" });
+    setAuthDetails(undefined);
+    setIsLogoutSuccessful(true);
+    queryClient.removeQueries();
+  }, []);
+
   useEffect(() => {
-    if (isLogoutSuccess) {
-      removeCookie(accessTokenName, { path: "/" });
-      removeCookie(accessTokenType, { path: "/" });
-      setAuthDetails(undefined);
-      setIsLogoutSuccessful(true);
-      queryClient.removeQueries();
+    if (isLogoutSuccess) clearTokens();
+    if (isErrorAuthLogout && logoutError) {
+      if (
+        (getValue(logoutError, "response.status") ?? "")?.toString() === "401"
+      ) {
+        clearTokens?.();
+      }
     }
   }, [
     userLogoutDetails,
@@ -65,12 +76,20 @@ export const useUserAuthDetails = () => {
     isLogoutSuccess,
     queryClient,
     removeCookie,
+    logoutError,
+    clearTokens,
   ]);
 
   const clearAuthDetails = () => {
     logoutUser();
   };
-  return { authDetails, setAuthCallback, clearAuthDetails, isLogoutSuccessful };
+  return {
+    authDetails,
+    setAuthCallback,
+    clearAuthDetails,
+    isLogoutSuccessful,
+    clearTokens,
+  };
 };
 
 export const useAuthenticateUser = () => {
