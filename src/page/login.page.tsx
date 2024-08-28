@@ -105,7 +105,7 @@ const LoginPage = (): JSX.Element => {
               autoComplete="email"
               autoFocus
               error={isError}
-              {...register("userId", { required: true })}
+              {...register("userId", { required: true, min: 1 })}
             />
             <DisplayFieldError field={formErrors?.userId} />
 
@@ -118,7 +118,7 @@ const LoginPage = (): JSX.Element => {
               id="password"
               autoComplete="current-password"
               error={isError}
-              {...register("password", { required: true })}
+              {...register("password", { required: true, min: 1 })}
             />
             <DisplayFieldError field={formErrors?.password} />
 
