@@ -11,21 +11,46 @@ import { TAppPage, TUserAuth } from "@model/data.types";
 import { useAuthenticateUser } from "@hooks/useUserAuthDetails.hooks";
 import { useNavigate } from "react-router-dom";
 import LoadingDialog from "@components/loading.dialog.component";
+import { isEmailFormat } from "@services/string.services";
 
 const LoginPage = (): JSX.Element => {
   const [loginPayload, setLoginPayload] = useState<TUserAuth>();
+  const [isUserIdError, setIsUserIdError] = useState(false);
+  const [isPasswordError, setIsPasswordError] = useState(false);
+
   const { isAuthenticated, authenticateUser, errors, isError } =
     useAuthenticateUser();
   const navigate = useNavigate();
   const [openLoading, setOpenLoading] = useState(false);
 
+  const isFormValidated = (formData: TUserAuth): boolean => {
+    let isValidated = false;
+    if (
+      !formData.userId ||
+      formData.userId.trim().length <= 0 ||
+      !isEmailFormat(formData.userId)
+    ) {
+      setIsUserIdError(true);
+      isValidated = true;
+    }
+    if (!formData.password || formData.password.trim().length <= 0) {
+      setIsPasswordError(true);
+      isValidated = true;
+    }
+    return isValidated;
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    setIsUserIdError(false);
+    setIsPasswordError(false);
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setLoginPayload({
+    const formData = {
       userId: data.get("email")?.toString() ?? "",
       password: data.get("password")?.toString() ?? "",
-    });
+    } as TUserAuth;
+    if (isFormValidated(formData)) return;
+    setLoginPayload(formData);
   };
 
   useEffect(() => {
@@ -35,6 +60,7 @@ const LoginPage = (): JSX.Element => {
     }
   }, [loginPayload, authenticateUser]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (isAuthenticated) {
       setOpenLoading(false);
@@ -50,7 +76,7 @@ const LoginPage = (): JSX.Element => {
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box className="flex mt-4 items-center flex-col h-screen justify-center">
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+          <Avatar className="m-1 !bg-pink-600">
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
@@ -71,8 +97,12 @@ const LoginPage = (): JSX.Element => {
               name="email"
               autoComplete="email"
               autoFocus
-              error={isError}
+              error={isError || isUserIdError}
             />
+            {isUserIdError && (
+              <span className="text-red-500">Invalid email input</span>
+            )}
+
             <TextField
               margin="normal"
               required
@@ -82,8 +112,12 @@ const LoginPage = (): JSX.Element => {
               type="password"
               id="password"
               autoComplete="current-password"
-              error={isError}
+              error={isError || isPasswordError}
             />
+
+            {isPasswordError && (
+              <span className="text-red-500">Invalid password input</span>
+            )}
 
             {isError && (
               <Box className="text-red-500">Invalid credentials.</Box>
